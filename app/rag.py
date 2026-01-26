@@ -50,7 +50,18 @@ class RAGSystem:
             self.prompt_template = Template(f.read())
     
     def _extract_text_from_pdf(self, file_content: bytes) -> str:
-        """Extract text from PDF bytes"""
+        """Extract text content from a PDF file.
+        
+        Args:
+            file_content: The PDF file content as bytes.
+        
+        Returns:
+            str: The extracted text from all pages of the PDF.
+        
+        Raises:
+            ValueError: If the PDF is encrypted, if no text can be extracted
+                (e.g., image-based/scanned PDF), or if the PDF cannot be read.
+        """
         import io
         try:
             reader = PdfReader(io.BytesIO(file_content))
@@ -81,7 +92,23 @@ class RAGSystem:
             raise
     
     def _chunk_text(self, text: str, chunk_size: int = 1000, overlap: int = 200) -> List[str]:
-        """Split text into overlapping chunks"""
+        """Split text into overlapping chunks for embedding generation.
+        
+        Args:
+            text:
+                The text to split into chunks.
+            
+            chunk_size:
+                The maximum size of each chunk in characters. Defaults to 1000.
+            
+            overlap:
+                The number of characters to overlap between consecutive chunks.
+                Defaults to 200. This ensures context continuity across chunks.
+        
+        Returns:
+            List[str]: A list of text chunks, each containing up to chunk_size
+                characters with overlap between consecutive chunks.
+        """
         chunks = []
         start = 0
         while start < len(text):
@@ -93,7 +120,17 @@ class RAGSystem:
         return chunks
     
     def _get_embedding(self, text: str) -> List[float]:
-        """Get embedding from Gemini"""
+        """Generate embedding vector for document text using Gemini.
+        
+        Args:
+            text:
+                The text content to generate an embedding for.
+        
+        Returns:
+            List[float]: A vector of floating-point numbers representing the
+                semantic embedding of the input text, optimized for document
+                retrieval tasks.
+        """
         result = genai.embed_content(
             model=self.embed_model,
             content=text,
@@ -102,7 +139,16 @@ class RAGSystem:
         return result['embedding']
     
     def _get_query_embedding(self, text: str) -> List[float]:
-        """Get embedding for query"""
+        """Generate embedding vector for a user query using Gemini.
+        
+        Args:
+            text:
+                The query text to generate an embedding for.
+        
+        Returns:
+            List[float]: A vector of floating-point numbers representing the
+                semantic embedding of the query, optimized for retrieval tasks.
+        """
         result = genai.embed_content(
             model=self.embed_model,
             content=text,
@@ -111,7 +157,28 @@ class RAGSystem:
         return result['embedding']
     
     def add_document(self, filename: str, file_content: bytes) -> dict:
-        """Add a PDF document to the RAG system"""
+        """Add a PDF document to the RAG system for indexing and retrieval.
+        
+        Extracts text from the PDF, splits it into overlapping chunks, generates
+        embeddings for each chunk, and stores them in ChromaDB for semantic search.
+        
+        Args:
+            filename:
+                The name of the PDF file being uploaded.
+            
+            file_content:
+                The binary content of the PDF file.
+        
+        Returns:
+            dict: A dictionary containing the document metadata with keys:
+                - id (str): Unique identifier for the document
+                - filename (str): Original filename
+                - uploaded_at (str): ISO format timestamp of upload
+                - chunks_count (int): Number of text chunks created
+        
+        Raises:
+            ValueError: If text extraction fails or the PDF is encrypted.
+        """
         doc_id = str(uuid.uuid4())
         
         print(f"Processing file: {filename}, size: {len(file_content)} bytes")
@@ -155,7 +222,26 @@ class RAGSystem:
         return self.documents[doc_id]
     
     def query(self, question: str, top_k: int = 3) -> dict:
-        """Query the RAG system"""
+        """Query the RAG system to get answers from indexed documents.
+        
+        Generates an embedding for the question, retrieves the most relevant
+        document chunks using semantic search, and uses Gemini to generate an
+        answer based on the retrieved context.
+        
+        Args:
+            question:
+                The question to answer based on the indexed documents.
+            
+            top_k:
+                The number of most relevant document chunks to retrieve.
+                Defaults to 3.
+        
+        Returns:
+            dict: A dictionary containing:
+                - question (str): The original question
+                - answer (str): The generated answer from the AI model
+                - sources (List[str]): List of source document filenames used
+        """
         # Get query embedding
         query_embedding = self._get_query_embedding(question)
         
@@ -196,11 +282,28 @@ class RAGSystem:
         }
     
     def get_all_documents(self) -> List[dict]:
-        """Get all uploaded documents"""
+        """Retrieve metadata for all documents in the RAG system.
+        
+        Returns:
+            List[dict]: A list of dictionaries, each containing document
+                metadata (id, filename, uploaded_at, chunks_count).
+        """
         return list(self.documents.values())
     
     def delete_document(self, doc_id: str) -> bool:
-        """Delete a document and its chunks"""
+        """Delete a specific document and all its associated chunks from the system.
+        
+        Removes the document's text chunks from ChromaDB and deletes its
+        metadata from the system.
+        
+        Args:
+            doc_id:
+                The unique identifier of the document to delete.
+        
+        Returns:
+            bool: True if the document was successfully deleted, False if the
+                document was not found.
+        """
         if doc_id not in self.documents:
             return False
         
