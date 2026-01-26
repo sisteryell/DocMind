@@ -20,18 +20,8 @@ class RAGSystem:
             raise ValueError("GEMINI_API_KEY environment variable is required")
         
         genai.configure(api_key=api_key)
-        
-        # Get model configuration from environment
-        model_name = os.getenv("MODEL_NAME")
-        if not model_name:
-            raise ValueError("MODEL_NAME not found. Please add it to your .env file")
-        
-        embedding_model = os.getenv("EMBEDDING_MODEL_NAME")
-        if not embedding_model:
-            raise ValueError("EMBEDDING_MODEL_NAME not found. Please add it to your .env file")
-        
-        self.model = genai.GenerativeModel(model_name)
-        self.embed_model = embedding_model
+        self.model = genai.GenerativeModel('gemini-2.0-flash')
+        self.embed_model = "models/embedding-001"
         
         # Initialize ChromaDB
         self.chroma_client = chromadb.PersistentClient(path="./chroma_db")
