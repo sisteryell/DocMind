@@ -7,9 +7,13 @@ from pypdf import PdfReader
 from typing import List
 import uuid
 from jinja2 import Template
+import logging
 
 # Load environment variables from .env file
 load_dotenv()
+
+# Configure logger
+logger = logging.getLogger(__name__)
 
 
 class RAGSystem:
@@ -65,7 +69,7 @@ class RAGSystem:
                     page_text = page.extract_text() or ""
                     text += page_text
                 except Exception as e:
-                    print(f"Warning: Could not extract text from page {page_num + 1}: {e}")
+                    logger.warning(f"Could not extract text from page {page_num + 1}: {e}")
             
             if not text.strip():
                 raise ValueError(
@@ -114,12 +118,12 @@ class RAGSystem:
         """Add a PDF document to the RAG system"""
         doc_id = str(uuid.uuid4())
         
-        print(f"Processing file: {filename}, size: {len(file_content)} bytes")
+        logger.info(f"Processing file: {filename}, size: {len(file_content)} bytes")
         
         # Extract text from PDF
         text = self._extract_text_from_pdf(file_content)
         
-        print(f"Extracted text length: {len(text)} characters")
+        logger.info(f"Extracted text length: {len(text)} characters")
         
         if not text.strip():
             raise ValueError("Could not extract text from PDF")
@@ -127,11 +131,11 @@ class RAGSystem:
         # Chunk the text
         chunks = self._chunk_text(text)
         
-        print(f"Created {len(chunks)} chunks")
+        logger.info(f"Created {len(chunks)} chunks")
         
         # Generate embeddings and store in ChromaDB
         for i, chunk in enumerate(chunks):
-            print(f"Processing chunk {i+1}/{len(chunks)}")
+            logger.debug(f"Processing chunk {i+1}/{len(chunks)}")
             chunk_id = f"{doc_id}_{i}"
             embedding = self._get_embedding(chunk)
             
@@ -232,7 +236,7 @@ class RAGSystem:
             self._save_metadata()
             return True
         except Exception as e:
-            print(f"Error deleting all documents: {e}")
+            logger.error(f"Error deleting all documents: {e}")
             return False
     
     def _save_metadata(self):
@@ -252,7 +256,7 @@ class RAGSystem:
                 with open(metadata_file, 'r') as f:
                     self.documents = json.load(f)
             except Exception as e:
-                print(f"Error loading metadata: {e}")
+                logger.error(f"Error loading metadata: {e}")
                 self.documents = {}
 
 

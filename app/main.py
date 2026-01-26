@@ -4,6 +4,10 @@ from fastapi.responses import HTMLResponse
 from app.models import QueryRequest, QueryResponse, DocumentUpload, DocumentInfo, HealthResponse
 from app.rag import get_rag_system
 from typing import List
+import logging
+
+# Configure logger
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="Simple RAG System",
@@ -50,7 +54,7 @@ async def upload_document(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         import traceback
-        print(f"Upload error: {traceback.format_exc()}")
+        logger.error(f"Upload error: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Error processing document: {str(e)}")
 
 
@@ -89,5 +93,5 @@ async def query_documents(request: QueryRequest):
         return QueryResponse(**result)
     except Exception as e:
         import traceback
-        print(f"Query error: {traceback.format_exc()}")
+        logger.error(f"Query error: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Error processing query: {str(e)}")
