@@ -21,8 +21,6 @@ A simple PDF Question-Answering system using Google Gemini and ChromaDB.
 ### 2. Run with Docker
 
 ```bash
-# Create .env file
-cp .env.example .env
 
 # Edit .env and add your Gemini API key
 # GEMINI_API_KEY=your_actual_api_key
