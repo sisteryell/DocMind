@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG System - PDF Q&A</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .card h2 {
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+        
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .upload-area:hover {
+            background: #f0f4ff;
+            border-color: #764ba2;
+        }
+        
+        .upload-area input {
+            display: none;
+        }
+        
+        .upload-area p {
+            color: #666;
+            margin-top: 10px;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
+        }
+        
+        .documents-list {
+            margin-top: 20px;
+        }
+        
+        .document-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .document-info {
+            flex: 1;
+        }
+        
+        .document-name {
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .document-meta {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .query-section {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .query-input {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        
+        .query-input:focus {
+            border-color: #667eea;
+        }
+        
+        .answer-box {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            display: none;
+        }
+        
+        .answer-box.show {
+            display: block;
+        }
+        
+        .answer-text {
+            color: #333;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+        
+        .sources {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        .sources-title {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .source-tag {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            margin-right: 5px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        
+        .loading::after {
+            content: '';
+            animation: dots 1.5s infinite;
+        }
+        
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 30px;
+            color: #999;
+        }
+        
+        .status-message {
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+        }
+        
+        .status-message.success {
+            display: block;
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-message.error {
+            display: block;
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📚 RAG System - PDF Q&A</h1>
+        
+        <!-- Upload Section -->
+        <div class="card">
+            <h2>📤 Upload Documents</h2>
+            <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+                <input type="file" id="fileInput" accept=".pdf" onchange="uploadFile(this)">
+                <div style="font-size: 48px;">📄</div>
+                <p>Click to upload a PDF file</p>
+            </div>
+            <div id="uploadStatus" class="status-message"></div>
+        </div>
+        
+        <!-- Documents List -->
+        <div class="card">
+            <h2>📁 Your Documents</h2>
+            <button class="btn btn-danger" onclick="resetAllDocuments()" style="float: right; margin-top: -50px;">Reset All</button>
+            <div id="documentsList" class="documents-list">
+                <div class="empty-state">No documents uploaded yet</div>
+            </div>
+        </div>
+        
+        <!-- Query Section -->
+        <div class="card">
+            <h2>❓ Ask a Question</h2>
+            <div class="query-section">
+                <input type="text" id="queryInput" class="query-input" placeholder="Ask anything about your documents..." onkeypress="handleKeyPress(event)">
+                <button class="btn" onclick="askQuestion()" id="askBtn">Ask</button>
+            </div>
+            <div id="answerBox" class="answer-box">
+                <div id="answerContent"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Reset all documents on page load
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Reset all documents
+            try {
+                await fetch('/documents/reset', { method: 'POST' });
+            } catch (error) {
+                console.log('Note: Could not reset documents on load');
+            }
+            
+            // Then load current documents (should be empty)
+            loadDocuments();
+        });
+        
+        async function uploadFile(input) {
+            const file = input.files[0];
+            if (!file) return;
+            
+            const statusDiv = document.getElementById('uploadStatus');
+            statusDiv.className = 'status-message';
+            statusDiv.textContent = 'Uploading...';
+            statusDiv.style.display = 'block';
+            statusDiv.style.background = '#fff3cd';
+            statusDiv.style.color = '#856404';
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                const response = await fetch('/documents/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    statusDiv.className = 'status-message success';
+                    statusDiv.textContent = `✅ Uploaded "${data.filename}" (${data.chunks_count} chunks)`;
+                    loadDocuments();
+                } else {
+                    const error = await response.json();
+                    statusDiv.className = 'status-message error';
+                    statusDiv.textContent = `❌ Error: ${error.detail}`;
+                }
+            } catch (error) {
+                statusDiv.className = 'status-message error';
+                statusDiv.textContent = `❌ Error: ${error.message}`;
+            }
+            
+            input.value = '';
+        }
+        
+        async function loadDocuments() {
+            const listDiv = document.getElementById('documentsList');
+            
+            try {
+                const response = await fetch('/documents');
+                const documents = await response.json();
+                
+                if (documents.length === 0) {
+                    listDiv.innerHTML = '<div class="empty-state">No documents uploaded yet</div>';
+                    return;
+                }
+                
+                listDiv.innerHTML = documents.map(doc => `
+                    <div class="document-item">
+                        <div class="document-info">
+                            <div class="document-name">📄 ${doc.filename}</div>
+                            <div class="document-meta">${doc.chunks_count} chunks • Uploaded: ${new Date(doc.uploaded_at).toLocaleString()}</div>
+                        </div>
+                        <button class="btn btn-danger" onclick="deleteDocument('${doc.id}')">Delete</button>
+                    </div>
+                `).join('');
+            } catch (error) {
+                listDiv.innerHTML = '<div class="empty-state">Error loading documents</div>';
+            }
+        }
+        
+        async function deleteDocument(docId) {
+            if (!confirm('Are you sure you want to delete this document?')) return;
+            
+            try {
+                const response = await fetch(`/documents/${docId}`, { method: 'DELETE' });
+                if (response.ok) {
+                    loadDocuments();
+                }
+            } catch (error) {
+                alert('Error deleting document');
+            }
+        }
+        
+        async function resetAllDocuments() {
+            if (!confirm('Are you sure you want to delete ALL documents? This cannot be undone!')) return;
+            
+            try {
+                const response = await fetch('/documents/reset', { method: 'POST' });
+                if (response.ok) {
+                    alert('All documents deleted successfully');
+                    loadDocuments();
+                } else {
+                    alert('Error resetting documents');
+                }
+            } catch (error) {
+                alert('Error resetting documents');
+            }
+        }
+        
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                askQuestion();
+            }
+        }
+        
+        async function askQuestion() {
+            const input = document.getElementById('queryInput');
+            const question = input.value.trim();
+            if (!question) return;
+            
+            const answerBox = document.getElementById('answerBox');
+            const answerContent = document.getElementById('answerContent');
+            const askBtn = document.getElementById('askBtn');
+            
+            answerBox.classList.add('show');
+            answerContent.innerHTML = '<div class="loading">Thinking</div>';
+            askBtn.disabled = true;
+            
+            try {
+                const response = await fetch('/query', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question, top_k: 3 })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    let html = `<div class="answer-text">${data.answer}</div>`;
+                    
+                    if (data.sources && data.sources.length > 0) {
+                        html += `
+                            <div class="sources">
+                                <div class="sources-title">Sources:</div>
+                                ${data.sources.map(s => `<span class="source-tag">${s}</span>`).join('')}
+                            </div>
+                        `;
+                    }
+                    
+                    answerContent.innerHTML = html;
+                } else {
+                    const error = await response.json();
+                    answerContent.innerHTML = `<div class="answer-text" style="color: #dc3545;">Error: ${error.detail}</div>`;
+                }
+            } catch (error) {
+                answerContent.innerHTML = `<div class="answer-text" style="color: #dc3545;">Error: ${error.message}</div>`;
+            }
+            
+            askBtn.disabled = false;
+        }
+    </script>
+</body>
+</html>
