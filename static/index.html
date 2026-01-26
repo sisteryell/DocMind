@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RAG System - PDF Q&A</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -156,8 +157,72 @@
         
         .answer-text {
             color: #333;
-            line-height: 1.6;
-            white-space: pre-wrap;
+            line-height: 1.8;
+        }
+        
+        .answer-text h1, .answer-text h2, .answer-text h3 {
+            color: #667eea;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        
+        .answer-text h1 {
+            font-size: 1.8em;
+        }
+        
+        .answer-text h2 {
+            font-size: 1.5em;
+        }
+        
+        .answer-text h3 {
+            font-size: 1.3em;
+        }
+        
+        .answer-text ul, .answer-text ol {
+            margin-left: 20px;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .answer-text li {
+            margin-bottom: 8px;
+        }
+        
+        .answer-text p {
+            margin-bottom: 12px;
+        }
+        
+        .answer-text strong {
+            color: #764ba2;
+            font-weight: 600;
+        }
+        
+        .answer-text em {
+            color: #555;
+        }
+        
+        .answer-text code {
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        
+        .answer-text pre {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        
+        .answer-text blockquote {
+            border-left: 4px solid #667eea;
+            padding-left: 15px;
+            margin-left: 0;
+            color: #555;
+            font-style: italic;
         }
         
         .sources {
@@ -397,7 +462,9 @@
                 
                 if (response.ok) {
                     const data = await response.json();
-                    let html = `<div class="answer-text">${data.answer}</div>`;
+                    // Render markdown to HTML
+                    const renderedAnswer = marked.parse(data.answer);
+                    let html = `<div class="answer-text">${renderedAnswer}</div>`;
                     
                     if (data.sources && data.sources.length > 0) {
                         html += `
