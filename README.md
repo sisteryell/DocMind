@@ -1,6 +1,6 @@
 # Simple RAG System
 
-A simple PDF Question-Answering system using Google Gemini and ChromaDB, with full observability powered by Langfuse.
+A simple PDF Question-Answering system using Google Gemini and ChromaDB.
 
 ## Features
 
@@ -9,9 +9,8 @@ A simple PDF Question-Answering system using Google Gemini and ChromaDB, with fu
 - 🤖 Get AI-powered answers using Google Gemini
 - 💾 Persistent storage with ChromaDB
 - 🎨 Clean web interface
-- 📊 **Full observability with Langfuse** (track performance, tokens, costs)
 
-## Quick Start
+## Setup
 
 ### 1. Get Gemini API Key
 
@@ -19,15 +18,7 @@ A simple PDF Question-Answering system using Google Gemini and ChromaDB, with fu
 2. Create a new API key
 3. Copy the API key
 
-### 2. (Optional) Get Langfuse Keys for Observability
-
-See [LANGFUSE_QUICKSTART.md](LANGFUSE_QUICKSTART.md) for 2-minute setup to enable:
-- Performance monitoring
-- Token usage tracking
-- Error debugging
-- Cost analysis
-
-### 3. Run with Docker
+### 2. Run with Docker
 
 ```bash
 
@@ -80,24 +71,10 @@ uvicorn app.main:app --reload
 - `DELETE /documents/{id}` - Delete a document
 - `POST /query` - Ask a question
 
-## Observability with Langfuse
-
-This project includes comprehensive tracing with Langfuse:
-
-- **📊 Performance Monitoring**: Track latency for uploads, queries, embeddings, and LLM calls
-- **💰 Cost Tracking**: Monitor token usage for embeddings and generation
-- **🐛 Error Debugging**: Detailed error traces with context
-- **📈 Analytics**: Understand user behavior and common queries
-
-**Quick Setup**: See [LANGFUSE_QUICKSTART.md](LANGFUSE_QUICKSTART.md)  
-**Full Guide**: See [LANGFUSE_INTEGRATION.md](LANGFUSE_INTEGRATION.md)
-
-**Optional**: The app works perfectly without Langfuse. Simply don't set the Langfuse environment variables.
-
 ## Project Structure
 
 ```
-DocMind/
+ekip/
 ├── app/
 │   ├── __init__.py
 │   ├── main.py      # FastAPI application
