@@ -364,16 +364,16 @@
                 if (response.ok) {
                     const data = await response.json();
                     statusDiv.className = 'status-message success';
-                    statusDiv.textContent = `✅ Uploaded "${data.filename}" (${data.chunks_count} chunks)`;
+                    statusDiv.textContent = `Uploaded "${data.filename}" (${data.chunks_count} chunks)`;
                     loadDocuments();
                 } else {
                     const error = await response.json();
                     statusDiv.className = 'status-message error';
-                    statusDiv.textContent = `❌ Error: ${error.detail}`;
+                    statusDiv.textContent = `Error: ${error.detail}`;
                 }
             } catch (error) {
                 statusDiv.className = 'status-message error';
-                statusDiv.textContent = `❌ Error: ${error.message}`;
+                statusDiv.textContent = `Error: ${error.message}`;
             }
             
             input.value = '';
@@ -394,7 +394,7 @@
                 listDiv.innerHTML = documents.map(doc => `
                     <div class="document-item">
                         <div class="document-info">
-                            <div class="document-name">📄 ${doc.filename}</div>
+                            <div class="document-name">${doc.filename}</div>
                             <div class="document-meta">${doc.chunks_count} chunks • Uploaded: ${new Date(doc.uploaded_at).toLocaleString()}</div>
                         </div>
                         <button class="btn btn-danger" onclick="deleteDocument('${doc.id}')">Delete</button>

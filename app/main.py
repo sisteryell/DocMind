@@ -1,13 +1,23 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 from app.models import QueryRequest, QueryResponse, DocumentUpload, DocumentInfo, HealthResponse
 from app.rag import get_rag_system
 from typing import List
 import logging
+from langfuse import Langfuse
+import os
 
 # Configure logger
 logger = logging.getLogger(__name__)
+
+# Initialize Langfuse (only if keys are configured)
+langfuse_client = None
+if os.getenv("LANGFUSE_PUBLIC_KEY") and os.getenv("LANGFUSE_SECRET_KEY"):
+    langfuse_client = Langfuse()
+    logger.info("Langfuse observability enabled")
+else:
+    logger.info("Langfuse observability disabled (no API keys found)")
 
 app = FastAPI(
     title="Simple RAG System",
@@ -17,6 +27,55 @@ app = FastAPI(
 
 # Mount static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
+
+@app.middleware("http")
+async def langfuse_middleware(request: Request, call_next):
+    """Middleware to trace all HTTP requests with Langfuse."""
+    # Skip tracing for static files and health checks
+    if request.url.path.startswith("/static") or request.url.path == "/health":
+        return await call_next(request)
+    
+    if langfuse_client:
+        trace = langfuse_client.trace(
+            name=f"{request.method} {request.url.path}",
+            metadata={
+                "method": request.method,
+                "path": request.url.path,
+                "client_host": request.client.host if request.client else None
+            },
+            tags=["api", "fastapi"]
+        )
+        
+        # Store trace in request state for access in endpoints
+        request.state.langfuse_trace = trace
+    
+    response = await call_next(request)
+    
+    if langfuse_client and hasattr(request.state, "langfuse_trace"):
+        request.state.langfuse_trace.update(
+            metadata={"status_code": response.status_code}
+        )
+    
+    return response
+
+
+@app.on_event("startup")
+async def startup_event():
+    """Initialize resources on application startup."""
+    logger.info("Starting DocMind RAG System")
+    if langfuse_client:
+        logger.info("Langfuse tracing is active")
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Cleanup resources on application shutdown."""
+    logger.info("Shutting down DocMind RAG System")
+    if langfuse_client:
+        logger.info("Flushing Langfuse traces...")
+        langfuse_client.flush()
+        logger.info("Langfuse traces flushed successfully")
 
 
 @app.get("/", response_class=HTMLResponse)
