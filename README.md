@@ -74,7 +74,7 @@ uvicorn app.main:app --reload
 ## Project Structure
 
 ```
-ekip/
+DocMind/
 ├── app/
 │   ├── __init__.py
 │   ├── main.py      # FastAPI application
