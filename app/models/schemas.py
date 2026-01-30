@@ -4,7 +4,7 @@ from datetime import datetime
 
 
 class DocumentUpload(BaseModel):
-    """Model for document upload response"""
+    """Response model for document upload."""
     id: str
     filename: str
     uploaded_at: datetime
@@ -12,20 +12,20 @@ class DocumentUpload(BaseModel):
 
 
 class QueryRequest(BaseModel):
-    """Model for query request"""
+    """Request model for querying documents."""
     question: str
     top_k: Optional[int] = 3
 
 
 class QueryResponse(BaseModel):
-    """Model for query response"""
+    """Response model for query results."""
     question: str
     answer: str
     sources: list[str]
 
 
 class DocumentInfo(BaseModel):
-    """Model for document information"""
+    """Model for document information."""
     id: str
     filename: str
     uploaded_at: str
@@ -33,6 +33,16 @@ class DocumentInfo(BaseModel):
 
 
 class HealthResponse(BaseModel):
-    """Model for health check response"""
+    """Response model for health check."""
     status: str
+    message: str
+
+
+class ErrorResponse(BaseModel):
+    """Response model for errors."""
+    detail: str
+
+
+class SuccessResponse(BaseModel):
+    """Response model for success messages."""
     message: str
