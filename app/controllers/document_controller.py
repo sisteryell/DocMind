@@ -12,9 +12,9 @@ router = APIRouter(prefix="/documents", tags=["documents"])
 
 @router.post("/upload", response_model=DocumentUpload)
 async def upload_document(file: UploadFile = File(...)):
-    """Upload a PDF and TXT document."""
-    if not file.filename.lower().endswith(('.pdf', '.txt')):
-        raise HTTPException(status_code=400, detail="Only PDF and TXT files are supported")
+    """Upload a PDF document."""
+    if not file.filename.lower().endswith('.pdf'):
+        raise HTTPException(status_code=400, detail="Only PDF files are supported")
     
     try:
         content = await file.read()
